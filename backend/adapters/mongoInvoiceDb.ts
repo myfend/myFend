@@ -52,7 +52,7 @@ export default class MongoInvoiceDb implements InvoiceDB {
   async show(id: string): Promise<AdministratorInvoice> {
     const result = await InvoiceModel.findById(id);
     if (!result) throw new Error("result not found");
-    const agencyResult = await Agency.findById(result._id);
+    const agencyResult = await Agency.findById(result.agency);
     const agency = {
       id: agencyResult?._id?.toString() as string,
       name: agencyResult?.name as string,
