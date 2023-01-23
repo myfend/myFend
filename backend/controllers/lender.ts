@@ -18,6 +18,7 @@ export interface LenderBlockchain {
 }
 
 export default class LenderController {
+  private router: Router = Router();
   private db: LenderDB;
   private blockchain: LenderBlockchain;
   private emitter: EventEmitter;
@@ -46,10 +47,9 @@ export default class LenderController {
   }
 
   registerRoutes(): Router {
-    const router = Router();
-    router.post("/lender/store", this.store());
+    this.router.post("/lender/store", this.store());
 
-    return router;
+    return this.router;
   }
 
   private store(): RequestHandler {

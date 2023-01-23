@@ -99,7 +99,7 @@ export interface AdministratorInvoice {
   name: string;
   description: string;
   url: string;
-  agency: Agency;
+  agency?: Agency;
   amount: number;
   interest: number;
   company: string;

@@ -12,24 +12,39 @@ import MongoInvoiceDb from "./adapters/mongoInvoiceDb";
 import CeloInvoice from "./adapters/celoInvoice";
 import { AdministratorAgencyController } from "./controllers/administratorAgency";
 import { MongoAdministratorAgencyDb } from "./adapters/mongoAdministratorAgencyDb";
+import InvoiceActiveController from "./controllers/invoiceActive";
+import MongoInvoiceActiveDB from "./adapters/mongoInvoiceActiveDB";
+import LenderContributionController from "./controllers/lenderContribution";
 
 export default class App {
   private express = express();
   private emitter = new Event();
 
   private registerControllers(): App {
-    startMongoose().catch((err) =>
-      console.error("database connection failed", err)
-    );
-
     this.express.use(this.makeLenderController().registerRoutes());
     this.express.use(this.makeAuthenticationController().registerRoute());
     this.express.use(
       this.makeAdministratorInvoiceController().registerRoutes()
     );
     this.express.use(this.makeAdministratorAgencyController().registerRoutes());
+    this.express.use(this.makeInvoiceActiveController().registerRoutes());
+    this.express.use(this.makeLenderContributionController().registerRouter());
 
     return this;
+  }
+
+  private makeLenderContributionController() {
+    return new LenderContributionController(
+      new MongoInvoiceActiveDB(),
+      this.emitter
+    );
+  }
+
+  private makeInvoiceActiveController() {
+    return new InvoiceActiveController(
+      new MongoInvoiceActiveDB(),
+      this.emitter
+    );
   }
 
   private makeAdministratorAgencyController() {
@@ -59,9 +74,15 @@ export default class App {
     );
   }
 
-  startExpressServer() {
+  async startExpressServer() {
     this.express.use(express.json());
     this.express.use(express.urlencoded({ extended: true }));
+
+    try {
+      await startMongoose();
+    } catch (err) {
+      console.error("database connection failed", err);
+    }
 
     this.registerControllers();
 

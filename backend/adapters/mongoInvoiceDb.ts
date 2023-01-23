@@ -7,31 +7,19 @@ import {
   SimpleInvoice,
 } from "../controllers/administratorInvoice";
 import Agency from "../database/models/agency";
+import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
 
-export default class MongoInvoiceDb implements InvoiceDB {
-  async list(params: InvoiceListParams): Promise<SimpleInvoice[]> {
-    const $limit = params?.limit || 20;
-    const $skip = params?.page && params?.page > 1 ? params.page - 1 : 0;
+export class MongoInvoiceDB {
+  protected async matchWhere(
+    $match: any,
+    options: { page?: number; limit?: number }
+  ) {
+    const res = await this.lookupAgencyAndPaginateInvoice($match, options);
+    return this.mapSimpleInvoice(res);
+  }
 
-    const $match: any = {};
-    if (params.status) {
-      $match.status = params.status;
-    }
-    const res = await InvoiceModel.aggregate([
-      { $match },
-      {
-        $lookup: {
-          from: "agencies",
-          localField: "agency",
-          foreignField: "_id",
-          as: "agencies",
-        },
-      },
-      { $skip },
-      { $limit },
-    ]);
-
+  protected mapSimpleInvoice(res: any[]) {
     return res.map((invoice) => ({
       id: invoice._id.toString(),
       name: invoice.name,
@@ -49,17 +37,56 @@ export default class MongoInvoiceDb implements InvoiceDB {
       status: invoice.status,
     }));
   }
+
+  protected async lookupAgencyAndPaginateInvoice(
+    query: any,
+    options: { page?: number; limit?: number } = {}
+  ) {
+    const $limit = options?.limit || 20;
+    const $skip = options?.page && options?.page > 1 ? options.page - 1 : 0;
+
+    let pipeline: any[] = [
+      {
+        $lookup: {
+          from: "agencies",
+          localField: "agency",
+          foreignField: "_id",
+          as: "agencies",
+        },
+      },
+      { $skip },
+      { $limit },
+    ];
+
+    if (Array.isArray(query)) {
+      pipeline = query.concat(pipeline);
+    } else {
+      pipeline = [{ $match: query }].concat(pipeline);
+    }
+
+    return InvoiceModel.aggregate(pipeline);
+  }
+}
+
+export default class MongoInvoiceDb
+  extends MongoInvoiceDB
+  implements InvoiceDB
+{
+  async list(params: InvoiceListParams): Promise<SimpleInvoice[]> {
+    const $match: any = {};
+    if (params.status) {
+      $match.status = params.status;
+    }
+
+    const res = await this.lookupAgencyAndPaginateInvoice($match, params);
+    return this.mapSimpleInvoice(res);
+  }
   async show(id: string): Promise<AdministratorInvoice> {
     const result = await InvoiceModel.findById(id);
     if (!result) throw new Error("result not found");
     const agencyResult = await Agency.findById(result.agency);
-    const agency = {
-      id: agencyResult?._id?.toString() as string,
-      name: agencyResult?.name as string,
-      description: agencyResult?.description as string,
-      email: agencyResult?.email as string,
-    };
-    return result.toInvoice(agency);
+
+    return result.toInvoice(agencyResult?.toAgency());
   }
   async store(input: InvoiceCreateInput): Promise<AdministratorInvoice> {
     const agency = await Agency.findById(input.agency);

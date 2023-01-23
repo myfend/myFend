@@ -19,7 +19,7 @@ export interface Invoice {
     string,
     { lender: Types.ObjectId; amount: number; stake: number }
   >;
-  toInvoice(agency: Agency): LogicInvoice;
+  toInvoice(agency?: Agency): LogicInvoice;
 }
 
 const schema = new Schema<Invoice>(
@@ -47,7 +47,7 @@ const schema = new Schema<Invoice>(
   {
     timestamps: true,
     methods: {
-      toInvoice(agency: Agency): LogicInvoice {
+      toInvoice(agency?: Agency): LogicInvoice {
         const contributions: any[] = [];
         this.contributions.forEach((contribution) =>
           contributions.push({
