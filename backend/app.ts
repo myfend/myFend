@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { PORT } from "./constants/http";
 import LenderController from "./controllers/lender";
 import Event from "./events/event";
@@ -75,6 +76,7 @@ export default class App {
   }
 
   async startExpressServer() {
+    this.express.use(cors());
     this.express.use(express.json());
     this.express.use(express.urlencoded({ extended: true }));
 

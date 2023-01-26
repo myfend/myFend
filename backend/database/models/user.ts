@@ -1,6 +1,7 @@
 import { model, Schema } from "mongoose";
 import { Lender } from "../../controllers/lender";
 import { Controller } from "../../console/controller";
+import { AuthenticationUser } from "../../controllers/authentication";
 
 export enum UserType {
   Lender = "lender",
@@ -16,6 +17,7 @@ interface User {
   wallet?: { address: string; balance: number; available: number };
   password: string;
   type: UserType;
+  toUser(): AuthenticationUser;
   toLender(): Lender;
   toController(): Controller;
 }
@@ -46,6 +48,17 @@ const schema = new Schema<User>(
           password: this.password,
           phone: this.phone,
           wallet: this.wallet || { address: "", balance: 0, available: 0 },
+        };
+      },
+      toUser(): AuthenticationUser {
+        return {
+          email: this.email,
+          firstname: this.firstname,
+          id: this._id.toString(),
+          lastname: this.lastname,
+          password: this.password,
+          phone: this.phone,
+          type: this.type,
         };
       },
       toController(): Controller {

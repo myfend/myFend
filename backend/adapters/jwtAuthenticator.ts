@@ -2,10 +2,10 @@ import jwt from "jsonwebtoken";
 import { APP_SECRET } from "../constants/app";
 import { NextFunction, Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
-import { Lender } from "../controllers/lender";
+import { AuthenticationUser } from "../controllers/authentication";
 
 export interface UserFinder {
-  findUserById(id: string): Promise<Lender>;
+  findUserById(id: string): Promise<AuthenticationUser>;
 }
 
 export default class JwtAuthenticator {

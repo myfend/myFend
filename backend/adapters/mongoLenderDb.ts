@@ -2,6 +2,7 @@ import { Lender, LenderDB, UserStoreInput } from "../controllers/lender";
 import User, { UserType } from "../database/models/user";
 import { UserFinder } from "./jwtAuthenticator";
 import { Types } from "mongoose";
+import { AuthenticationUser } from "../controllers/authentication";
 
 export default class MongoLenderDb implements LenderDB, UserFinder {
   async create(input: UserStoreInput): Promise<Lender> {
@@ -28,10 +29,10 @@ export default class MongoLenderDb implements LenderDB, UserFinder {
     await user.save();
     return user.toLender();
   }
-  async findUserById(id: string): Promise<Lender> {
+  async findUserById(id: string): Promise<AuthenticationUser> {
     const objectId = new Types.ObjectId(id);
     const user = await User.findById(objectId);
     if (!user) throw new Error("user not found");
-    return user.toLender();
+    return user.toUser();
   }
 }

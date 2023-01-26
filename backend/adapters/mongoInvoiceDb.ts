@@ -11,14 +11,6 @@ import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
 
 export class MongoInvoiceDB {
-  protected async matchWhere(
-    $match: any,
-    options: { page?: number; limit?: number }
-  ) {
-    const res = await this.lookupAgencyAndPaginateInvoice($match, options);
-    return this.mapSimpleInvoice(res);
-  }
-
   protected mapSimpleInvoice(res: any[]) {
     return res.map((invoice) => ({
       id: invoice._id.toString(),

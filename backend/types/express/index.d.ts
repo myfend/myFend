@@ -1,10 +1,10 @@
-import { Lender } from "../../controllers/lender";
 import { UserType } from "../../database/models/user";
+import { AuthenticationUser } from "../../controllers/authentication";
 
 declare global {
   namespace Express {
     export interface Request {
-      user?: Lender;
+      user?: AuthenticationUser;
       userType?: UserType;
     }
   }

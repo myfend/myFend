@@ -1,5 +1,4 @@
-import { AuthDb } from "../controllers/authentication";
-import { Lender } from "../controllers/lender";
+import { AuthDb, AuthenticationUser } from "../controllers/authentication";
 import User from "../database/models/user";
 
 export default class MongoAuthDB implements AuthDb {
@@ -9,15 +8,16 @@ export default class MongoAuthDB implements AuthDb {
   }: {
     email?: string;
     phone?: string;
-  }): Promise<Lender> {
+  }): Promise<AuthenticationUser> {
     let query = {};
     if (email && phone) query = { $or: [{ email }, { phone }] };
     else if (email) query = { email };
     else if (phone) query = { phone };
-    else throw new Error("query has to provide email or phone");
+    // else throw new Error("query has to provide email or phone");
+    console.log(query);
 
     const user = await User.findOne(query);
     if (!user) throw new Error("user not found");
-    return user.toLender();
+    return user.toUser();
   }
 }
