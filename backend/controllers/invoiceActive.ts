@@ -1,5 +1,9 @@
 import { Request, RequestHandler, Response, Router } from "express";
-import { InvoiceStatus, SimpleInvoice } from "./administratorInvoice";
+import {
+  InvoiceListParams,
+  InvoiceStatus,
+  SimpleInvoice,
+} from "./administratorInvoice";
 import { Agency } from "./agency";
 import { StatusCodes } from "http-status-codes";
 import { EventEmitter } from "../events/event";
@@ -23,7 +27,11 @@ export default class InvoiceActiveController {
 
   private list(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const invoices = await this.db.listActiveInvoices(req.query);
+      const params: InvoiceActiveDbActiveParams = {};
+      if (req.query.page) params.page = +req.query.page;
+      if (req.query.limit) params.limit = +req.query.limit;
+
+      const invoices = await this.db.listActiveInvoices(params);
       return res.json(invoices);
     };
   }

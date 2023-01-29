@@ -49,9 +49,9 @@ const schema = new Schema<Invoice>(
     methods: {
       toInvoice(agency?: Agency): LogicInvoice {
         const contributions: any[] = [];
-        this.contributions.forEach((contribution) =>
+        this.contributions?.forEach((contribution) =>
           contributions.push({
-            lender: { id: contribution.lender.toString() },
+            lender: { id: contribution.lender?.toString() },
             amount: contribution.amount,
             stake: contribution.stake,
           })

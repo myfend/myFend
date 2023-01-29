@@ -1,7 +1,9 @@
 import { Request, RequestHandler, Response, Router } from "express";
 import Encrypter from "../adapters/encrypter";
 import { StatusCodes } from "http-status-codes";
-import JwtAuthenticator from "../adapters/jwtAuthenticator";
+import JwtAuthenticator, {
+  JwtAuthMiddleware,
+} from "../adapters/jwtAuthenticator";
 
 export interface AuthDb {
   findUserByEmailOrPhone(query: {
@@ -12,6 +14,8 @@ export interface AuthDb {
 
 export default class AuthenticationController {
   private db: AuthDb;
+
+  private auth = new JwtAuthMiddleware();
 
   private encrypter: Encrypter;
 
@@ -31,39 +35,52 @@ export default class AuthenticationController {
 
   registerRoute(): Router {
     this.router.post("/login", this.login());
-    this.router.get("/authentication/show", this.show());
+    this.router.get(
+      "/authentication/show",
+      this.auth.middleware(),
+      this.show()
+    );
 
     return this.router;
   }
 
   private login(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const input: LoginInput = req.body;
-      const user = await this.db.findUserByEmailOrPhone({
-        email: input.email,
-      });
+      try {
+        const user = await this.db.findUserByEmailOrPhone({
+          email: req.body.email,
+        });
 
-      if (
-        !(await this.encrypter.compare(input.password, user.password as string))
-      ) {
+        if (
+          !(await this.encrypter.compare(
+            req.body.password,
+            user.password as string
+          ))
+        ) {
+          return res
+            .status(StatusCodes.UNAUTHORIZED)
+            .json({ message: "UNAUTHORIZED" });
+        }
+
+        const token = await this.authenticator.loginUsingId(user.id);
+
+        return res.status(StatusCodes.OK).json({
+          user: {
+            id: user.id,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            phone: user.phone,
+            type: user.type,
+          },
+          token,
+        });
+      } catch (e) {
+        console.log(e);
         return res
           .status(StatusCodes.UNAUTHORIZED)
-          .json({ message: "Unauthorized" });
+          .json({ message: "UNAUTHORIZED" });
       }
-
-      const token = await this.authenticator.loginUsingId(user.id);
-
-      return res.status(StatusCodes.OK).json({
-        user: {
-          id: user.id,
-          firstname: user.firstname,
-          lastname: user.lastname,
-          email: user.email,
-          phone: user.phone,
-          type: user.type,
-        },
-        token,
-      });
     };
   }
 

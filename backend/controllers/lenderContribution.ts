@@ -1,4 +1,4 @@
-import { Router, Request, Response, RequestHandler } from "express";
+import { Request, RequestHandler, Response, Router } from "express";
 import { EventEmitter } from "../events/event";
 import { StatusCodes } from "http-status-codes";
 import Joi from "joi";
@@ -10,30 +10,6 @@ import {
 } from "./invoiceActive";
 import { Agency } from "./agency";
 import { InvoiceStatus } from "./administratorInvoice";
-
-export interface SimpleInvoice {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-  agency: Agency;
-  amount: number;
-  interest: number;
-  contributed: number;
-  company: string;
-  status: InvoiceStatus;
-}
-
-export interface LenderContributionDB {
-  contributionsFor(id: string): Promise<Map<string, number>>;
-
-  contributeTo(
-    invoiceId: string,
-    params: InvoiceContributeToParams
-  ): Promise<PublicInvoice>;
-
-  allInvoiceContributedToBy(id: string): Promise<SimpleInvoice[]>;
-}
 
 export default class LenderContributionController {
   private readonly router = Router();
@@ -105,4 +81,65 @@ export default class LenderContributionController {
       return res.json(invoices);
     };
   }
+
+  private stats(): RequestHandler {
+    return async (req: Request, res: Response) => {
+      if (!req.user?.id) {
+        return res
+          .status(StatusCodes.UNAUTHORIZED)
+          .json({ message: "UNAUTHORIZED" });
+      }
+
+      const invoices = await this.db.allInvoicesContributedToBy(req.user.id);
+      const stat = invoices.reduce(
+        (previous, invoice) => {
+          previous.interest += invoice.contribution.interest;
+          previous.amount += invoice.contribution.amount;
+          return previous;
+        },
+        {
+          count: invoices.length,
+          interest: 0,
+          amount: 0,
+        }
+      );
+
+      return res.json(stat);
+    };
+  }
+}
+
+export interface SimpleInvoice {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  agency: Agency;
+  amount: number;
+  interest: number;
+  contributed: number;
+  company: string;
+  status: InvoiceStatus;
+}
+
+export interface LenderContribution {
+  company: { name: string };
+  name: string;
+  id: string;
+  amount: number;
+  interest: number;
+  contribution: { amount: number; interest: number };
+}
+
+export interface LenderContributionDB {
+  contributionsFor(id: string): Promise<Map<string, number>>;
+
+  contributeTo(
+    invoiceId: string,
+    params: InvoiceContributeToParams
+  ): Promise<PublicInvoice>;
+
+  allInvoiceContributedToBy(id: string): Promise<SimpleInvoice[]>;
+
+  allInvoicesContributedToBy(id: string): Promise<LenderContribution[]>;
 }

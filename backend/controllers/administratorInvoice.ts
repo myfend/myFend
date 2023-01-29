@@ -4,13 +4,16 @@ import { StatusCodes } from "http-status-codes";
 import { Agency } from "./agency";
 import { EventEmitter } from "../events/event";
 import InvoiceStored from "../events/invoiceStored";
+import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
 
 export default class AdministratorInvoiceController {
+  private readonly auth = new JwtAuthMiddleware();
   private db: InvoiceDB;
 
   private smartContract: InvoiceSmartContract;
 
   private emitter: EventEmitter;
+  private router = Router();
 
   constructor(
     db: InvoiceDB,
@@ -23,13 +26,11 @@ export default class AdministratorInvoiceController {
   }
 
   registerRoutes(): Router {
-    const router = Router();
+    this.router.post("/invoice/store", this.auth.middleware(), this.store());
+    this.router.get("/invoice/all", this.auth.middleware(), this.list());
+    this.router.get("/invoice/:invoice", this.auth.middleware(), this.show());
 
-    router.post("/invoice/store", this.store());
-    router.get("/invoice/all", this.list());
-    router.get("/invoice/:invoice", this.show());
-
-    return router;
+    return this.router;
   }
 
   private store(): RequestHandler {
@@ -66,7 +67,11 @@ export default class AdministratorInvoiceController {
 
   private list(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const invoices = await this.db.list(req.body);
+      const params: InvoiceListParams = {};
+      if (req.query.page) params.page = +req.query.page;
+      if (req.query.limit) params.limit = +req.query.limit;
+
+      const invoices = await this.db.list(params);
       return res.status(StatusCodes.OK).json(invoices);
     };
   }

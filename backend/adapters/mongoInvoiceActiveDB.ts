@@ -10,9 +10,11 @@ import {
 } from "../controllers/invoiceActive";
 import { MongoInvoiceDB } from "./mongoInvoiceDb";
 import InvoiceModel from "../database/models/invoice";
+import Invoice from "../database/models/invoice";
 import Agency from "../database/models/agency";
 import { Types } from "mongoose";
 import {
+  LenderContribution,
   LenderContributionDB,
   SimpleInvoice as LenderContributionSimpleInvoice,
 } from "../controllers/lenderContribution";
@@ -21,6 +23,39 @@ export default class MongoInvoiceActiveDB
   extends MongoInvoiceDB
   implements InvoiceActiveDB, LenderContributionDB
 {
+  async allInvoicesContributedToBy(id: string): Promise<LenderContribution[]> {
+    const pipeline: any = [
+      {
+        $match: {
+          status: InvoiceStatus.Active,
+          contributions: { $elemMatch: { lender: new Types.ObjectId(id) } },
+        },
+      },
+    ];
+
+    return (await Invoice.aggregate(pipeline)).map((invoice) => {
+      const contribution = invoice.contributions[id];
+      const actualInterest =
+        invoice.interest *
+        invoice.amount *
+        ((contribution?.amount as number) / invoice.amount);
+
+      return {
+        id: invoice._id.toString() as string,
+        name: invoice.name as string,
+        amount: invoice.amount as number,
+        interest: invoice.interest as number,
+        company: {
+          name: invoice.company?.name as string,
+        },
+        contribution: {
+          interest: actualInterest,
+          amount: contribution?.amount,
+        },
+      };
+    });
+  }
+
   async allInvoiceContributedToBy(
     id: string
   ): Promise<LenderContributionSimpleInvoice[]> {

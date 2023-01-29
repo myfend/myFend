@@ -9,6 +9,7 @@ import {
 import Agency from "../database/models/agency";
 import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
+import { NOT_FOUND } from "../constants/errors";
 
 export class MongoInvoiceDB {
   protected mapSimpleInvoice(res: any[]) {
@@ -38,6 +39,7 @@ export class MongoInvoiceDB {
     const $skip = options?.page && options?.page > 1 ? options.page - 1 : 0;
 
     let pipeline: any[] = [
+      { $sort: { createdAt: -1 } },
       {
         $lookup: {
           from: "agencies",
@@ -75,7 +77,7 @@ export default class MongoInvoiceDb
   }
   async show(id: string): Promise<AdministratorInvoice> {
     const result = await InvoiceModel.findById(id);
-    if (!result) throw new Error("result not found");
+    if (!result) throw NOT_FOUND;
     const agencyResult = await Agency.findById(result.agency);
 
     return result.toInvoice(agencyResult?.toAgency());
@@ -103,7 +105,6 @@ export default class MongoInvoiceDb
     const invoiceDoc = await InvoiceModel.findByIdAndUpdate(invoice.id, {
       walletAddress: address,
     });
-    console.log(invoiceDoc);
 
     invoice.walletAddress = address;
     return invoice;
