@@ -16,6 +16,9 @@ import { MongoAdministratorAgencyDb } from "./adapters/mongoAdministratorAgencyD
 import InvoiceActiveController from "./controllers/invoiceActive";
 import MongoInvoiceActiveDB from "./adapters/mongoInvoiceActiveDB";
 import LenderContributionController from "./controllers/lenderContribution";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export default class App {
   private express = express();
