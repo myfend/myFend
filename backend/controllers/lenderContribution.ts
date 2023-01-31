@@ -10,9 +10,11 @@ import {
 } from "./invoiceActive";
 import { Agency } from "./agency";
 import { InvoiceStatus } from "./administratorInvoice";
+import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
 
 export default class LenderContributionController {
   private readonly router = Router();
+  private readonly auth = new JwtAuthMiddleware();
 
   private readonly db: LenderContributionDB;
 
@@ -24,8 +26,21 @@ export default class LenderContributionController {
   }
 
   registerRouter() {
-    this.router.post("/lender/contribution/store", this.store());
-    this.router.post("/lender/contribution/list", this.list());
+    this.router.post(
+      "/lender/contribution/store",
+      this.auth.middleware(),
+      this.store()
+    );
+    this.router.post(
+      "/lender/contribution/list",
+      this.auth.middleware(),
+      this.list()
+    );
+    this.router.get(
+      "/lender/contribution/stats",
+      this.auth.middleware(),
+      this.stats()
+    );
 
     return this.router;
   }
