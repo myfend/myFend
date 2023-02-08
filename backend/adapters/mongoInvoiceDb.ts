@@ -2,6 +2,7 @@ import {
   AdministratorInvoice,
   InvoiceCreateInput,
   InvoiceDB,
+  InvoiceInterestAndAmount,
   InvoiceListParams,
   InvoiceStatus,
   SimpleInvoice,
@@ -10,6 +11,8 @@ import Agency from "../database/models/agency";
 import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
 import { NOT_FOUND } from "../constants/errors";
+import { Types } from "mongoose";
+import Invoice from "../database/models/invoice";
 
 export class MongoInvoiceDB {
   protected mapSimpleInvoice(res: any[]) {
@@ -66,6 +69,22 @@ export default class MongoInvoiceDb
   extends MongoInvoiceDB
   implements InvoiceDB
 {
+  async takeInterestAndAmountFromAllInvoices(): Promise<
+    InvoiceInterestAndAmount[]
+  > {
+    return (
+      await Invoice.aggregate([
+        {
+          $match: {
+            status: InvoiceStatus.Active,
+          },
+        },
+      ])
+    ).map((invoice) => ({
+      interest: invoice.interest,
+      amount: invoice.amount,
+    }));
+  }
   async list(params: InvoiceListParams): Promise<SimpleInvoice[]> {
     const $match: any = {};
     if (params.status) {

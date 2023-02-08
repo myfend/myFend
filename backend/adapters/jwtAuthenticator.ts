@@ -56,6 +56,9 @@ export class JwtAuthMiddleware {
       const authorization = req.headers?.authorization;
       if (!authorization) {
         return next();
+        return res
+          .status(StatusCodes.UNAUTHORIZED)
+          .json({ message: "UNAUTHORIZED" });
       }
       const split: string[] = authorization.split(" ");
       try {

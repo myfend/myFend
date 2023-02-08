@@ -7,8 +7,10 @@ import {
 import { Agency } from "./agency";
 import { StatusCodes } from "http-status-codes";
 import { EventEmitter } from "../events/event";
+import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
 
 export default class InvoiceActiveController {
+  private readonly auth = new JwtAuthMiddleware();
   private readonly db: InvoiceActiveDB;
   private readonly router = Router();
   private readonly emitter: EventEmitter;
@@ -19,8 +21,8 @@ export default class InvoiceActiveController {
   }
 
   registerRoutes() {
-    this.router.get("/invoice/active/all", this.list());
-    this.router.get("/invoice/active/:id", this.show());
+    this.router.get("/invoice/active/all", this.auth.middleware(), this.list());
+    this.router.get("/invoice/:id/active", this.auth.middleware(), this.show());
 
     return this.router;
   }

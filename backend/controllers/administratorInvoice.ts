@@ -28,6 +28,7 @@ export default class AdministratorInvoiceController {
   registerRoutes(): Router {
     this.router.post("/invoice/store", this.auth.middleware(), this.store());
     this.router.get("/invoice/all", this.auth.middleware(), this.list());
+    this.router.get("/invoice/stats", this.auth.middleware(), this.stats());
     this.router.get("/invoice/:invoice", this.auth.middleware(), this.show());
 
     return this.router;
@@ -82,6 +83,24 @@ export default class AdministratorInvoiceController {
       return res.status(StatusCodes.OK).json(invoice);
     };
   }
+
+  private stats(): RequestHandler {
+    return async (req: Request, res: Response) => {
+      const invoices = await this.db.takeInterestAndAmountFromAllInvoices();
+      const initialValue = {
+        count: invoices.length,
+        interest: 0,
+        amount: 0,
+      };
+      const stat = invoices.reduce((previous, invoice) => {
+        previous.interest += invoice.interest;
+        previous.amount += invoice.amount;
+        return previous;
+      }, initialValue);
+
+      return res.status(StatusCodes.OK).json(stat);
+    };
+  }
 }
 
 export interface InvoiceCreateInput {
@@ -131,6 +150,11 @@ export interface InvoiceListParams {
   limit?: number;
 }
 
+export interface InvoiceInterestAndAmount {
+  amount: number;
+  interest: number;
+}
+
 export interface InvoiceDB {
   store(input: InvoiceCreateInput): Promise<AdministratorInvoice>;
 
@@ -142,6 +166,8 @@ export interface InvoiceDB {
   list(params?: InvoiceListParams): Promise<SimpleInvoice[]>;
 
   show(id: string): Promise<AdministratorInvoice>;
+
+  takeInterestAndAmountFromAllInvoices(): Promise<InvoiceInterestAndAmount[]>;
 }
 
 export interface InvoiceSmartContract {

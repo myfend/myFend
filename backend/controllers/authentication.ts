@@ -46,6 +46,7 @@ export default class AuthenticationController {
 
   private login(): RequestHandler {
     return async (req: Request, res: Response) => {
+      console.log(req);
       try {
         const user = await this.db.findUserByEmailOrPhone({
           email: req.body.email,
