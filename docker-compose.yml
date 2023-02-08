@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     build:
       context: backend
-      target: dev
+      target: $TARGET
       dockerfile: Dockerfile
     ports:
       - $BACKEND_PORT:3000
@@ -20,7 +20,7 @@ services:
       - backend
     build:
       context: frontend
-      target: dev
+      target: $TARGET
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
