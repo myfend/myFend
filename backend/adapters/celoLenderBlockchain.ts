@@ -8,6 +8,7 @@ import {
 
 export default class CeloLenderBlockchain implements LenderBlockchain {
   async createWalletFor(id: string): Promise<string> {
+    return "";
     const provider = new ethers.providers.JsonRpcProvider(
       JSON_RPC_PROVIDER_URL
     );
