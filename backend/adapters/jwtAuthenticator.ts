@@ -55,7 +55,6 @@ export class JwtAuthMiddleware {
     return async (req: Request, res: Response, next: NextFunction) => {
       const authorization = req.headers?.authorization;
       if (!authorization) {
-        return next();
         return res
           .status(StatusCodes.UNAUTHORIZED)
           .json({ message: "UNAUTHORIZED" });
