@@ -46,7 +46,6 @@ export default class AuthenticationController {
 
   private login(): RequestHandler {
     return async (req: Request, res: Response) => {
-      console.log(req);
       try {
         const user = await this.db.findUserByEmailOrPhone({
           email: req.body.email,
@@ -92,15 +91,21 @@ export default class AuthenticationController {
           .status(StatusCodes.UNAUTHORIZED)
           .json({ message: "UNAUTHORIZED" });
 
-      const user = req.user;
-      return res.status(StatusCodes.OK).json({
-        id: user.id,
-        firstname: user.firstname,
-        lastname: user.lastname,
-        email: user.email,
-        phone: user.phone,
-        type: user.type,
-      });
+      try {
+        const user = req.user;
+        return res.status(StatusCodes.OK).json({
+          id: user.id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          email: user.email,
+          phone: user.phone,
+          type: user.type,
+        });
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 }

@@ -29,19 +29,31 @@ export default class InvoiceActiveController {
 
   private list(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const params: InvoiceActiveDbActiveParams = {};
-      if (req.query.page) params.page = +req.query.page;
-      if (req.query.limit) params.limit = +req.query.limit;
+      try {
+        const params: InvoiceActiveDbActiveParams = {};
+        if (req.query.page) params.page = +req.query.page;
+        if (req.query.limit) params.limit = +req.query.limit;
 
-      const invoices = await this.db.listActiveInvoices(params);
-      return res.json(invoices);
+        const invoices = await this.db.listActiveInvoices(params);
+        return res.json(invoices);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 
   private show(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const invoice = await this.db.findInvoice(req.params.id);
-      return res.status(StatusCodes.OK).json(invoice);
+      try {
+        const invoice = await this.db.findInvoice(req.params.id);
+        return res.status(StatusCodes.OK).json(invoice);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 }

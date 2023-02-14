@@ -67,21 +67,27 @@ export default class LenderContributionController {
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(e);
       }
 
-      const contributions = await this.db.contributionsFor(input.invoice);
-      const amount = (contributions.get(input.lender) || 0) + input.amount;
+      try {
+        const contributions = await this.db.contributionsFor(input.invoice);
+        const amount = (contributions.get(input.lender) || 0) + input.amount;
 
-      let totalRaised = input.amount;
-      contributions.forEach((amount) => (totalRaised += amount));
+        let totalRaised = input.amount;
+        contributions.forEach((amount) => (totalRaised += amount));
 
-      const invoice = await this.db.contributeTo(input.invoice, {
-        lender: input.lender,
-        amount,
-        stake: amount / totalRaised,
-      });
+        const invoice = await this.db.contributeTo(input.invoice, {
+          lender: input.lender,
+          amount,
+          stake: amount / totalRaised,
+        });
 
-      this.emitter.emit(new NewContribution(invoice));
+        this.emitter.emit(new NewContribution(invoice));
 
-      return res.status(StatusCodes.OK).json(invoice);
+        return res.status(StatusCodes.OK).json(invoice);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 
@@ -92,8 +98,14 @@ export default class LenderContributionController {
           .status(StatusCodes.UNAUTHORIZED)
           .json({ message: "UNAUTHORIZED" });
 
-      const invoices = await this.db.allInvoiceContributedToBy(req.user.id);
-      return res.json(invoices);
+      try {
+        const invoices = await this.db.allInvoiceContributedToBy(req.user.id);
+        return res.json(invoices);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 
@@ -105,21 +117,27 @@ export default class LenderContributionController {
           .json({ message: "UNAUTHORIZED" });
       }
 
-      const invoices = await this.db.allInvoicesContributedToBy(req.user.id);
-      const stat = invoices.reduce(
-        (previous, invoice) => {
-          previous.interest += invoice.contribution.interest;
-          previous.amount += invoice.contribution.amount;
-          return previous;
-        },
-        {
-          count: invoices.length,
-          interest: 0,
-          amount: 0,
-        }
-      );
+      try {
+        const invoices = await this.db.allInvoicesContributedToBy(req.user.id);
+        const stat = invoices.reduce(
+          (previous, invoice) => {
+            previous.interest += invoice.contribution.interest;
+            previous.amount += invoice.contribution.amount;
+            return previous;
+          },
+          {
+            count: invoices.length,
+            interest: 0,
+            amount: 0,
+          }
+        );
 
-      return res.json(stat);
+        return res.json(stat);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 }

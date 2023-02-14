@@ -54,15 +54,21 @@ export default class AdministratorInvoiceController {
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(e);
       }
 
-      let invoice = await this.db.store(input);
-      invoice = await this.db.addWalletAddress(
-        invoice,
-        await this.smartContract.createWalletAddressFor(invoice.id)
-      );
+      try {
+        let invoice = await this.db.store(input);
+        invoice = await this.db.addWalletAddress(
+          invoice,
+          await this.smartContract.createWalletAddressFor(invoice.id)
+        );
 
-      this.emitter.emit<InvoiceStored>(new InvoiceStored(invoice));
+        this.emitter.emit<InvoiceStored>(new InvoiceStored(invoice));
 
-      return res.status(StatusCodes.CREATED).json(invoice);
+        return res.status(StatusCodes.CREATED).json(invoice);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 

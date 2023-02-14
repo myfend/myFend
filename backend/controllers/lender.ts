@@ -69,25 +69,31 @@ export default class LenderController {
       if (error)
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(error);
 
-      input.password = await this.encrypter.hash(input.password);
+      try {
+        input.password = await this.encrypter.hash(input.password);
 
-      let lender = await this.db.create(input);
+        let lender = await this.db.create(input);
 
-      const walletAddress = await this.blockchain.createWalletFor(lender.id);
-      lender = await this.db.updateWalletAddress(lender.id, walletAddress);
+        const walletAddress = await this.blockchain.createWalletFor(lender.id);
+        lender = await this.db.updateWalletAddress(lender.id, walletAddress);
 
-      const openLender = {
-        id: lender.id,
-        wallet: lender.wallet,
-        firstname: lender.firstname,
-        lastname: lender.lastname,
-        email: lender.email,
-        phone: lender.phone,
-      };
+        const openLender = {
+          id: lender.id,
+          wallet: lender.wallet,
+          firstname: lender.firstname,
+          lastname: lender.lastname,
+          email: lender.email,
+          phone: lender.phone,
+        };
 
-      this.emitter.emit<UserRegistered>(new UserRegistered(openLender));
+        this.emitter.emit<UserRegistered>(new UserRegistered(openLender));
 
-      return res.status(StatusCodes.CREATED).json(openLender);
+        return res.status(StatusCodes.CREATED).json(openLender);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 }

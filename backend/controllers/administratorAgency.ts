@@ -62,10 +62,16 @@ export class AdministratorAgencyController {
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(e.details);
       }
 
-      const agency = await this.db.store(input);
-      this.emitter.emit<AgencyStored>(new AgencyStored(agency));
+      try {
+        const agency = await this.db.store(input);
+        this.emitter.emit<AgencyStored>(new AgencyStored(agency));
 
-      return res.status(StatusCodes.CREATED).json(agency);
+        return res.status(StatusCodes.CREATED).json(agency);
+      } catch (e: any) {
+        return res
+          .status(StatusCodes.INTERNAL_SERVER_ERROR)
+          .json(e ? e.message : "INTERNAL_SERVER_ERROR");
+      }
     };
   }
 }
