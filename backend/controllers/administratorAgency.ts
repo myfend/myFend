@@ -59,6 +59,7 @@ export class AdministratorAgencyController {
           .options({ abortEarly: false })
           .validateAsync(input);
       } catch (e: any) {
+        console.error(e);
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(e.details);
       }
 
@@ -68,6 +69,7 @@ export class AdministratorAgencyController {
 
         return res.status(StatusCodes.CREATED).json(agency);
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");

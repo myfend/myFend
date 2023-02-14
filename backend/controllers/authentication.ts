@@ -76,7 +76,7 @@ export default class AuthenticationController {
           token,
         });
       } catch (e) {
-        console.log(e);
+        console.error(e);
         return res
           .status(StatusCodes.UNAUTHORIZED)
           .json({ message: "UNAUTHORIZED" });
@@ -102,6 +102,7 @@ export default class AuthenticationController {
           type: user.type,
         });
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");

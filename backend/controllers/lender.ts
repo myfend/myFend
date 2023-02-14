@@ -90,6 +90,7 @@ export default class LenderController {
 
         return res.status(StatusCodes.CREATED).json(openLender);
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");

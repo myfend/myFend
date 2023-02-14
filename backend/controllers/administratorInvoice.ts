@@ -65,6 +65,7 @@ export default class AdministratorInvoiceController {
 
         return res.status(StatusCodes.CREATED).json(invoice);
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");

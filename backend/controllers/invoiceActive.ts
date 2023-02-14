@@ -37,6 +37,7 @@ export default class InvoiceActiveController {
         const invoices = await this.db.listActiveInvoices(params);
         return res.json(invoices);
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");
@@ -50,6 +51,7 @@ export default class InvoiceActiveController {
         const invoice = await this.db.findInvoice(req.params.id);
         return res.status(StatusCodes.OK).json(invoice);
       } catch (e: any) {
+        console.error(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");
