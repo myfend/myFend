@@ -47,6 +47,8 @@ export default class AdministratorInvoiceController {
           amount: Joi.number().required(),
           interest: Joi.number().required().min(0).max(1),
           company: Joi.string().required(),
+          contributionClosesAt: Joi.string().required(),
+          repaymentAt: Joi.string().required(),
         })
           .options({ abortEarly: false })
           .validate(input);
@@ -86,8 +88,21 @@ export default class AdministratorInvoiceController {
 
   private show(): RequestHandler {
     return async (req: Request, res: Response) => {
-      const invoice = await this.db.show(req.params.invoice);
-      return res.status(StatusCodes.OK).json(invoice);
+      try {
+        const invoice = await this.db.show(req.params.invoice);
+        return res.status(StatusCodes.OK).json(invoice);
+      } catch (e: any) {
+        switch (e.message) {
+          case "NOT_FOUND":
+            return res
+              .status(StatusCodes.NOT_FOUND)
+              .json({ message: "NOT_FOUND" });
+          default:
+            return res
+              .status(StatusCodes.INTERNAL_SERVER_ERROR)
+              .json({ message: "INTERNAL_SERVER_ERROR" });
+        }
+      }
     };
   }
 
@@ -118,6 +133,8 @@ export interface InvoiceCreateInput {
   amount: number;
   interest: number;
   company: string;
+  contributionClosesAt: string;
+  repaymentAt: string;
 }
 
 export enum InvoiceStatus {
@@ -136,6 +153,8 @@ export interface AdministratorInvoice {
   company: string;
   status: InvoiceStatus;
   activatedAt: Date;
+  contributionClosesAt: Date;
+  repaymentAt: Date;
   contributions: { lender: { id: string }; amount: number }[];
 }
 
@@ -148,6 +167,8 @@ export interface SimpleInvoice {
   amount: number;
   interest: number;
   company: string;
+  contributionClosesAt: Date;
+  repaymentAt: Date;
   status: InvoiceStatus;
 }
 

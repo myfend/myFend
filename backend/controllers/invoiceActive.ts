@@ -72,6 +72,8 @@ export interface PublicInvoice {
   status: InvoiceStatus;
   activatedAt: Date;
   contributions: { lender: { id: string }; amount: number }[];
+  contributionClosesAt: Date;
+  repaymentAt: Date;
 }
 
 export interface InvoiceContributeToParams {

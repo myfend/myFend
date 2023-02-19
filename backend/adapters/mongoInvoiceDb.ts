@@ -11,7 +11,6 @@ import Agency from "../database/models/agency";
 import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
 import { NOT_FOUND } from "../constants/errors";
-import { Types } from "mongoose";
 import Invoice from "../database/models/invoice";
 
 export class MongoInvoiceDB {
@@ -31,6 +30,8 @@ export class MongoInvoiceDB {
       },
       company: invoice.company,
       status: invoice.status,
+      contributionClosesAt: invoice.contributionClosesAt,
+      repaymentAt: invoice.repaymentAt,
     }));
   }
 

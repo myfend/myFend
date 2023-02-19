@@ -145,6 +145,8 @@ export default class MongoInvoiceActiveDB
       name: result.name,
       status: result.status,
       url: result.url,
+      contributionClosesAt: result.contributionClosesAt,
+      repaymentAt: result.repaymentAt,
     };
   }
 }

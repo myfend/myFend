@@ -14,6 +14,8 @@ export interface Invoice {
   company: string;
   walletAddress: string;
   status: InvoiceStatus;
+  contributionClosesAt: Date;
+  repaymentAt: Date;
   activatedAt: Date;
   contributions: Map<
     string,
@@ -32,6 +34,8 @@ const schema = new Schema<Invoice>(
     amount: Number,
     interest: Number,
     activatedAt: Date,
+    contributionClosesAt: Date,
+    repaymentAt: Date,
     company: String,
     status: {
       type: String,
@@ -63,6 +67,8 @@ const schema = new Schema<Invoice>(
           amount: this.amount,
           company: this.company,
           description: this.description,
+          contributionClosesAt: this.contributionClosesAt,
+          repaymentAt: this.repaymentAt,
           id: this._id.toString(),
           name: this.name,
           walletAddress: this.walletAddress,
