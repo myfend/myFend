@@ -5,56 +5,69 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract Project is Pausable, Ownable, ReentrancyGuard {
     mapping(address => Contribution) private contributions;
 
+    bool public constant interfaceSupported = true;
+
+    ERC20 private token;
+
     struct Contribution {
         address lender;
-        uint amount;
-        uint repay;
+        uint256 amount;
+        uint256 repay;
         bool isset;
+        bool repaid;
     }
 
-    uint private immutable amount;
-    uint private immutable repayAmount;
+    uint256 private immutable amount;
+    uint256 private immutable repayAmount;
     bool private repaid;
 
-    constructor(uint _amount, uint _repay) {
+    constructor(uint256 _amount, uint256 _repay, address _token) {
         amount = _amount;
         repayAmount = _repay;
+        token = ERC20(_token);
     }
 
-    function deposit(uint amountToRepay) public payable whenNotPaused nonReentrant   {
-        require(amount <= address(this).balance + msg.value, "deposit exceeds amount needed");
+    function deposit(uint256 amountToRepay) public whenNotPaused nonReentrant   {
+        uint256 _amount = token.allowance(msg.sender, address(this));
 
-        contributions[msg.sender].lender = msg.sender;
-        contributions[msg.sender].amount += msg.value;
-        contributions[msg.sender].repay = amountToRepay;
+        require(amount <= address(this).balance + _amount, "deposit exceeds amount needed");
+        require(_amount >= amountToRepay, "Approve right amount");
+
+        bool success = token.transferFrom(msg.sender, address(this), amountToRepay);
+
+        if (success) {
+            contributions[msg.sender].lender = msg.sender;
+            contributions[msg.sender].amount += _amount;
+            contributions[msg.sender].repay = amountToRepay;
+        }
     }
 
-    function repay() public payable whenNotPaused nonReentrant  {
+    function repay() public whenNotPaused nonReentrant  {
         require(repaid, "project already repaid");
-        require(msg.value == repayAmount, "Invalid repayment amount");
-        repaid = true;
+        require(token.allowance(msg.sender, address(this)) == repayAmount, "Invalid repayment amount");
+
+        repaid = token.transferFrom(msg.sender, address(this), repayAmount);
     }
 
-    function claim(uint amountToWithdraw) public payable whenNotPaused nonReentrant  {
-        require(repaid, "contract has not been paid");
-        require(contributions[msg.sender].amount <= amountToWithdraw, "Insufficient Funds");
+    function claim() public whenNotPaused nonReentrant  {
+        Contribution memory contribution = contributions[msg.sender];
 
-        contributions[msg.sender].amount -= amountToWithdraw;
-        bool sent = payable(msg.sender).send(amountToWithdraw);
-        require(sent, "Failed to Complete");
+        require(!contribution.repaid, "contract has been paid");
+
+        contributions[msg.sender].repaid = true;
+        contributions[msg.sender].repaid = token.transfer(msg.sender, contribution.repay);
     }
 
-    function pause() public onlyOwner {
+    function pause() external onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function unpause() external onlyOwner {
         _unpause();
     }
-
-    receive() external payable {}
 }
