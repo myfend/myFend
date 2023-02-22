@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import {
   BSC_MAINNET_PRIVATE_KEY,
+  BSC_SCAN_API_KEY,
   BSC_TESTNET_PRIVATE_KEY,
 } from "./constants/env";
 
@@ -11,7 +12,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 1000,
         details: { yul: false },
       },
     },
@@ -32,6 +33,11 @@ const config: HardhatUserConfig = {
       gasPrice: 20000000000,
       accounts: [BSC_MAINNET_PRIVATE_KEY],
     },
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://bscscan.com/
+    apiKey: BSC_SCAN_API_KEY,
   },
 };
 

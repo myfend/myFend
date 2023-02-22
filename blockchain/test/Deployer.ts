@@ -1,5 +1,4 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 
@@ -27,15 +26,17 @@ describe("Deployer", function () {
       const { deployer } = await loadFixture(deployDeployerTokenFixture);
       const ProjectFactory = await ethers.getContractFactory("Project");
 
+      const projectId = "lets-do-this";
       await deployer.deployProject(
+        projectId,
         ethers.utils.parseEther("2000"),
         ethers.utils.parseEther("2020")
       );
-      const address = await deployer.lastProject();
+      const address = await deployer.projectAddress(projectId);
       const project = ProjectFactory.attach(address);
 
       expect(address).to.not.equal(null);
-      expect(await project.interfaceSupported()).is.true;
+      expect(await project.getProjectId()).is.equal(projectId);
     });
   });
 });

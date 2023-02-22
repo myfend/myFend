@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract Project is Pausable, Ownable, ReentrancyGuard {
     mapping(address => Contribution) private contributions;
 
-    bool public constant interfaceSupported = true;
+    string public projectId;
 
     ERC20 private token;
 
@@ -26,10 +26,15 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     uint256 private immutable repayAmount;
     bool private repaid;
 
-    constructor(uint256 _amount, uint256 _repay, address _token) {
+    constructor(string memory _projectId, uint256 _amount, uint256 _repay, address _token) {
+        projectId = _projectId;
         amount = _amount;
         repayAmount = _repay;
         token = ERC20(_token);
+    }
+
+    function getProjectId() public view returns (string memory) {
+        return projectId;
     }
 
     function deposit(uint256 amountToRepay) public whenNotPaused nonReentrant   {
@@ -70,4 +75,10 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     function unpause() external onlyOwner {
         _unpause();
     }
+
+    function emptyBalance() public onlyOwner {
+        msg.sender.transfer(address(this).balance);
+    }
+
+    receive() external payable {}
 }

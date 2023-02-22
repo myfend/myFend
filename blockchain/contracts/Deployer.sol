@@ -8,40 +8,37 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./Project.sol";
 
 contract Deployer is Pausable, Ownable, ReentrancyGuard {
-    address[] private projects;
+    mapping(string => address) private projects;
     address private token;
 
     constructor(address _token) {
         token = _token;
     }
 
-    function deployProject(uint _amount, uint _repay) public returns (address) {
-        Project project = new Project(_amount, _repay, token);
+    function deployProject(string memory projectId, uint _amount, uint _repay) public returns (address) {
+        Project project = new Project(projectId, _amount, _repay, token);
         address contractAddress = address(project);
 
-        projects.push(contractAddress);
+        projects[projectId] = contractAddress;
 
         return contractAddress;
     }
 
-    function lastProject() public view returns (address) {
-        return projects[projects.length - 1];
+    function projectAddress(string memory _projectId) public view returns (address) {
+        return projects[_projectId];
     }
 
     function pause() public onlyOwner {
-        for (uint i = 0; i < projects.length; i++) {
-            Project(projects[i]).pause();
-        }
-        
         _pause();
     }
 
     function unpause() public onlyOwner {
-        for (uint i = 0; i < projects.length; i++) {
-            Project(projects[i]).unpause();
-        }
-
         _unpause();
     }
 
+    function emptyBalance() public onlyOwner {
+        msg.sender.transfer(address(this).balance);
+    }
+
+    receive() external payable {}
 }
