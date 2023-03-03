@@ -9,7 +9,7 @@ async function main() {
 
   await deployer.deployed();
 
-  console.log("address: ", deployer.address);
+  console.log("deployer address: ", deployer.address);
 }
 
 main().catch((e) => {

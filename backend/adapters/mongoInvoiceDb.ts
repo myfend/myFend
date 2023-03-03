@@ -19,6 +19,7 @@ export class MongoInvoiceDB {
       id: invoice._id.toString(),
       name: invoice.name,
       description: invoice.description,
+      walletAddress: invoice.walletAddress,
       interest: invoice.interest,
       amount: invoice.amount,
       url: invoice.url,
@@ -35,7 +36,7 @@ export class MongoInvoiceDB {
     }));
   }
 
-  protected async lookupAgencyAndPaginateInvoice(
+  protected async pipelineLatestLookupAgencyAndPaginateInvoice(
     query: any,
     options: { page?: number; limit?: number } = {}
   ) {
@@ -43,7 +44,6 @@ export class MongoInvoiceDB {
     const $skip = options?.page && options?.page > 1 ? options.page - 1 : 0;
 
     let pipeline: any[] = [
-      { $sort: { createdAt: -1 } },
       {
         $lookup: {
           from: "agencies",
@@ -57,9 +57,11 @@ export class MongoInvoiceDB {
     ];
 
     if (Array.isArray(query)) {
-      pipeline = query.concat(pipeline);
+      pipeline = [{ $sort: { createdAt: -1 } }].concat(query).concat(pipeline);
     } else {
-      pipeline = [{ $match: query }].concat(pipeline);
+      pipeline = [{ $sort: { createdAt: -1 } }, { $match: query }].concat(
+        pipeline
+      );
     }
 
     return InvoiceModel.aggregate(pipeline);
@@ -92,7 +94,10 @@ export default class MongoInvoiceDb
       $match.status = params.status;
     }
 
-    const res = await this.lookupAgencyAndPaginateInvoice($match, params);
+    const res = await this.pipelineLatestLookupAgencyAndPaginateInvoice(
+      $match,
+      params
+    );
     return this.mapSimpleInvoice(res);
   }
   async show(id: string): Promise<AdministratorInvoice> {

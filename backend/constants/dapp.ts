@@ -1,3 +1,3 @@
-export const JSON_RPC_PROVIDER_URL = "http://127.0.0.1:8545/";
-export const CONTROLLER_PRIVATE_KEY =
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+export const JSON_RPC_PROVIDER_URL = process.env.JSON_RPC_PROVIDER_URL;
+export const CONTROLLER_PRIVATE_KEY = process.env.CONTROLLER_PRIVATE_KEY;
+export const DEPLOYER_CONTRACT_ADDRESS = process.env.DEPLOYER_CONTRACT_ADDRESS;

@@ -67,16 +67,19 @@ export interface PublicInvoice {
   url: string;
   agency?: Agency;
   amount: number;
+  walletAddress: string;
   interest: number;
   company: string;
   status: InvoiceStatus;
   activatedAt: Date;
-  contributions: { lender: { id: string }; amount: number }[];
+  contributed: number;
+  contributions: { lender: { id: string }; amount: number; repay: number }[];
   contributionClosesAt: Date;
   repaymentAt: Date;
 }
 
 export interface InvoiceContributeToParams {
+  repay: number;
   stake: number;
   amount: number;
   lender: string;
@@ -92,7 +95,7 @@ export interface InvoiceActiveDB {
 
 export interface InvoiceContributeInput {
   invoice: string;
-  amount: number;
+  amount: string;
   lender: string;
 }
 

@@ -5,6 +5,7 @@ export interface Controller {
   id: string;
   firstname: string;
   lastname: string;
+  fullName: string;
   email: string;
   phone: string;
   password: string;

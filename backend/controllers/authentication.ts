@@ -115,6 +115,7 @@ type LoginInput = { email: string; phone: string; password: string };
 
 export interface AuthenticationUser {
   id: string;
+  fullName: string;
   firstname: string;
   lastname: string;
   email: string;

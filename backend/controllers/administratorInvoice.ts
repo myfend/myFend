@@ -5,23 +5,19 @@ import { Agency } from "./agency";
 import { EventEmitter } from "../events/event";
 import InvoiceStored from "../events/invoiceStored";
 import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
+import invoice from "../database/models/invoice";
 
 export default class AdministratorInvoiceController {
   private readonly auth = new JwtAuthMiddleware();
   private db: InvoiceDB;
-
-  private smartContract: InvoiceSmartContract;
+  private invoiceDapp: InvoiceDapp;
 
   private emitter: EventEmitter;
   private router = Router();
 
-  constructor(
-    db: InvoiceDB,
-    smartContract: InvoiceSmartContract,
-    emitter: EventEmitter
-  ) {
+  constructor(db: InvoiceDB, invoiceDapp: InvoiceDapp, emitter: EventEmitter) {
     this.db = db;
-    this.smartContract = smartContract;
+    this.invoiceDapp = invoiceDapp;
     this.emitter = emitter;
   }
 
@@ -60,7 +56,11 @@ export default class AdministratorInvoiceController {
         let invoice = await this.db.store(input);
         invoice = await this.db.addWalletAddress(
           invoice,
-          await this.smartContract.createWalletAddressFor(invoice.id)
+          await this.invoiceDapp.createWalletAddressFor(
+            invoice.id,
+            invoice.amount,
+            invoice.repaymentAmount as number
+          )
         );
 
         this.emitter.emit<InvoiceStored>(new InvoiceStored(invoice));
@@ -149,6 +149,7 @@ export interface AdministratorInvoice {
   url: string;
   agency?: Agency;
   amount: number;
+  repaymentAmount?: number;
   interest: number;
   company: string;
   status: InvoiceStatus;
@@ -156,6 +157,7 @@ export interface AdministratorInvoice {
   contributionClosesAt: Date;
   repaymentAt: Date;
   contributions: { lender: { id: string }; amount: number }[];
+  contributed: number;
 }
 
 export interface SimpleInvoice {
@@ -198,6 +200,10 @@ export interface InvoiceDB {
   takeInterestAndAmountFromAllInvoices(): Promise<InvoiceInterestAndAmount[]>;
 }
 
-export interface InvoiceSmartContract {
-  createWalletAddressFor(id: string): Promise<string>;
+export interface InvoiceDapp {
+  createWalletAddressFor(
+    id: string,
+    amount: number,
+    repaymentAmount: number
+  ): Promise<string>;
 }

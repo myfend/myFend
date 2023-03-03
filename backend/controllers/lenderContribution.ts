@@ -31,7 +31,7 @@ export default class LenderContributionController {
       this.auth.middleware(),
       this.store()
     );
-    this.router.post(
+    this.router.get(
       "/lender/contribution/list",
       this.auth.middleware(),
       this.list()
@@ -57,6 +57,7 @@ export default class LenderContributionController {
 
       try {
         await Joi.object({
+          hash: Joi.string().required(),
           invoice: Joi.string().required(),
           lender: Joi.string().required(),
           amount: Joi.number().required(),
@@ -68,21 +69,27 @@ export default class LenderContributionController {
       }
 
       try {
-        const contributions = await this.db.contributionsFor(input.invoice);
-        const amount = (contributions.get(input.lender) || 0) + input.amount;
+        const {
+          amount: invoiceAmount,
+          repaymentAmount,
+          amountLenderContributed: oldAmount,
+        } = await this.db.getInvoiceAmountAndAmountUserContributed(
+          input.invoice,
+          input.lender
+        );
+        const amount: number = oldAmount + parseFloat(input.amount);
+        const stake = amount / invoiceAmount;
 
-        let totalRaised = input.amount;
-        contributions.forEach((amount) => (totalRaised += amount));
-
-        const invoice = await this.db.contributeTo(input.invoice, {
+        const a = await this.db.contributeToInvoice(input.invoice, {
           lender: input.lender,
           amount,
-          stake: amount / totalRaised,
+          stake: stake,
+          repay: stake * repaymentAmount,
         });
 
-        this.emitter.emit(new NewContribution(invoice));
+        this.emitter.emit(new NewContribution(a));
 
-        return res.status(StatusCodes.OK).json(invoice);
+        return res.status(StatusCodes.OK).json(a);
       } catch (e: any) {
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
@@ -99,9 +106,12 @@ export default class LenderContributionController {
           .json({ message: "UNAUTHORIZED" });
 
       try {
-        const invoices = await this.db.allInvoiceContributedToBy(req.user.id);
+        const invoices = await this.db.allInvoicesLenderContributedTo(
+          req.user.id
+        );
         return res.json(invoices);
       } catch (e: any) {
+        console.log(e);
         return res
           .status(StatusCodes.INTERNAL_SERVER_ERROR)
           .json(e ? e.message : "INTERNAL_SERVER_ERROR");
@@ -118,15 +128,16 @@ export default class LenderContributionController {
       }
 
       try {
-        const invoices = await this.db.allInvoicesContributedToBy(req.user.id);
-        const stat = invoices.reduce(
-          (previous, invoice) => {
-            previous.interest += invoice.contribution.interest;
-            previous.amount += invoice.contribution.amount;
+        const contribution =
+          await this.db.allContributionsAmountAndReturnByLender(req.user.id);
+        const stat = contribution.reduce(
+          (previous, contribution) => {
+            previous.interest += contribution.repay;
+            previous.amount += contribution.amount;
             return previous;
           },
           {
-            count: invoices.length,
+            count: contribution.length,
             interest: 0,
             amount: 0,
           }
@@ -156,24 +167,30 @@ export interface SimpleInvoice {
   status: InvoiceStatus;
 }
 
-export interface LenderContribution {
-  company: { name: string };
-  name: string;
-  id: string;
+export interface InvoiceNumbersWithUserContributionData {
   amount: number;
-  interest: number;
-  contribution: { amount: number; interest: number };
+  repaymentAmount: number;
+  amountLenderContributed: number;
+}
+
+export interface Contribution {
+  amount: number;
+  stake: number;
+  repay: number;
 }
 
 export interface LenderContributionDB {
-  contributionsFor(id: string): Promise<Map<string, number>>;
+  getInvoiceAmountAndAmountUserContributed(
+    invoiceId: string,
+    lenderId: string
+  ): Promise<InvoiceNumbersWithUserContributionData>;
 
-  contributeTo(
+  contributeToInvoice(
     invoiceId: string,
     params: InvoiceContributeToParams
   ): Promise<PublicInvoice>;
 
-  allInvoiceContributedToBy(id: string): Promise<SimpleInvoice[]>;
+  allInvoicesLenderContributedTo(id: string): Promise<SimpleInvoice[]>;
 
-  allInvoicesContributedToBy(id: string): Promise<LenderContribution[]>;
+  allContributionsAmountAndReturnByLender(id: string): Promise<Contribution[]>;
 }

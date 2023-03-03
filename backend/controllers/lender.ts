@@ -5,7 +5,6 @@ import UserRegistered from "../events/userRegistered";
 import { EventEmitter } from "../events/event";
 import Encrypter from "../adapters/encrypter";
 import MongoLenderDb from "../adapters/mongoLenderDb";
-import CeloLenderBlockchain from "../adapters/celoLenderBlockchain";
 
 export interface LenderDB {
   create(input: UserStoreInput): Promise<Lender>;
@@ -13,37 +12,21 @@ export interface LenderDB {
   updateWalletAddress(id: string, walletAddress: string): Promise<Lender>;
 }
 
-export interface LenderBlockchain {
-  createWalletFor(id: string): Promise<string>;
-}
-
 export default class LenderController {
   private router: Router = Router();
   private db: LenderDB;
-  private blockchain: LenderBlockchain;
   private emitter: EventEmitter;
 
   private encrypter: Encrypter;
 
-  constructor(
-    db: LenderDB,
-    blockchain: LenderBlockchain,
-    emitter: EventEmitter,
-    encrypter: Encrypter
-  ) {
+  constructor(db: LenderDB, emitter: EventEmitter, encrypter: Encrypter) {
     this.db = db;
-    this.blockchain = blockchain;
     this.emitter = emitter;
     this.encrypter = encrypter;
   }
 
   static new(emitter: EventEmitter) {
-    return new LenderController(
-      new MongoLenderDb(),
-      new CeloLenderBlockchain(),
-      emitter,
-      new Encrypter()
-    );
+    return new LenderController(new MongoLenderDb(), emitter, new Encrypter());
   }
 
   registerRoutes(): Router {
@@ -73,9 +56,6 @@ export default class LenderController {
         input.password = await this.encrypter.hash(input.password);
 
         let lender = await this.db.create(input);
-
-        const walletAddress = await this.blockchain.createWalletFor(lender.id);
-        lender = await this.db.updateWalletAddress(lender.id, walletAddress);
 
         const openLender = {
           id: lender.id,
@@ -115,6 +95,7 @@ export type Lender = {
     available: number;
   };
   firstname: string;
+  fullName: string;
   lastname: string;
   email: string;
   phone: string;

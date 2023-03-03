@@ -37,8 +37,8 @@ contract Deployer is Pausable, Ownable, ReentrancyGuard {
     }
 
     function emptyBalance() public onlyOwner {
-        msg.sender.transfer(address(this).balance);
-    }
+        payable(msg.sender).transfer(address(this).balance);
+     }
 
     receive() external payable {}
 }

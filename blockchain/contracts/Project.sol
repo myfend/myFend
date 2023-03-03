@@ -40,10 +40,10 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     function deposit(uint256 amountToRepay) public whenNotPaused nonReentrant   {
         uint256 _amount = token.allowance(msg.sender, address(this));
 
-        require(amount <= address(this).balance + _amount, "deposit exceeds amount needed");
-        require(_amount >= amountToRepay, "Approve right amount");
+        require(amount >= token.balanceOf(address(this)) + _amount, "deposit exceeds amount needed");
+        require(_amount <= amountToRepay, "Approve right amount");
 
-        bool success = token.transferFrom(msg.sender, address(this), amountToRepay);
+        bool success = token.transferFrom(msg.sender, address(this), _amount);
 
         if (success) {
             contributions[msg.sender].lender = msg.sender;
@@ -54,14 +54,19 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
 
     function repay() public whenNotPaused nonReentrant  {
         require(repaid, "project already repaid");
-        require(token.allowance(msg.sender, address(this)) == repayAmount, "Invalid repayment amount");
+        require(token.allowance(msg.sender, address(this)) != repayAmount, "Invalid repayment amount");
 
         repaid = token.transferFrom(msg.sender, address(this), repayAmount);
+    }
+
+    function debug() public view returns(bool, uint256) {
+        return (repaid, token.allowance(msg.sender, address(this)));
     }
 
     function claim() public whenNotPaused nonReentrant  {
         Contribution memory contribution = contributions[msg.sender];
 
+        require(!repaid, "contract has been paid");
         require(!contribution.repaid, "contract has been paid");
 
         contributions[msg.sender].repaid = true;
@@ -77,7 +82,7 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     }
 
     function emptyBalance() public onlyOwner {
-        msg.sender.transfer(address(this).balance);
+        payable(msg.sender).transfer(address(this).balance);
     }
 
     receive() external payable {}

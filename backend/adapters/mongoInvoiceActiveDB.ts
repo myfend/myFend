@@ -14,57 +14,48 @@ import Invoice from "../database/models/invoice";
 import Agency from "../database/models/agency";
 import { Types } from "mongoose";
 import {
-  LenderContribution,
+  Contribution,
+  InvoiceNumbersWithUserContributionData,
   LenderContributionDB,
   SimpleInvoice as LenderContributionSimpleInvoice,
 } from "../controllers/lenderContribution";
+import User from "../database/models/user";
 
 export default class MongoInvoiceActiveDB
   extends MongoInvoiceDB
   implements InvoiceActiveDB, LenderContributionDB
 {
-  async allInvoicesContributedToBy(id: string): Promise<LenderContribution[]> {
+  async allContributionsAmountAndReturnByLender(
+    id: string
+  ): Promise<Contribution[]> {
+    const user = await User.findById(id);
+    if (!user) return [];
+
     const pipeline: any = [
       {
         $match: {
           status: InvoiceStatus.Active,
-          contributions: { $elemMatch: { lender: new Types.ObjectId(id) } },
+          _id: { $in: user?.projectContributed },
         },
       },
     ];
 
-    return (await Invoice.aggregate(pipeline)).map((invoice) => {
-      const contribution = invoice.contributions[id];
-      const actualInterest =
-        invoice.interest *
-        invoice.amount *
-        ((contribution?.amount as number) / invoice.amount);
-
-      return {
-        id: invoice._id.toString() as string,
-        name: invoice.name as string,
-        amount: invoice.amount as number,
-        interest: invoice.interest as number,
-        company: {
-          name: invoice.company?.name as string,
-        },
-        contribution: {
-          interest: actualInterest,
-          amount: contribution?.amount,
-        },
-      };
-    });
+    const aggregateResult = await Invoice.aggregate(pipeline);
+    return aggregateResult.map((invoice) => invoice.contributions[id]);
   }
 
-  async allInvoiceContributedToBy(
+  async allInvoicesLenderContributedTo(
     id: string
   ): Promise<LenderContributionSimpleInvoice[]> {
+    const user = await User.findById(id);
+    if (!user) return [];
+
     const $match: any = {
       status: InvoiceStatus.Active,
-      contributions: { $elemMatch: { lender: new Types.ObjectId(id) } },
+      _id: { $in: user?.projectContributed },
     };
 
-    const res = await this.lookupAgencyAndPaginateInvoice($match);
+    const res = await this.pipelineLatestLookupAgencyAndPaginateInvoice($match);
 
     return res.map((invoice) => ({
       id: invoice._id.toString(),
@@ -72,7 +63,7 @@ export default class MongoInvoiceActiveDB
       description: invoice.description,
       interest: invoice.interest,
       amount: invoice.amount,
-      contributed: invoice.contributions.get(id),
+      contributed: invoice.contributions[id],
       url: invoice.url,
       agency: {
         id: invoice.agencies[0]?._id?.toString(),
@@ -84,6 +75,7 @@ export default class MongoInvoiceActiveDB
       status: invoice.status,
     }));
   }
+
   async listActiveInvoices(
     params: InvoiceActiveDbActiveParams
   ): Promise<SimpleInvoice[]> {
@@ -91,37 +83,52 @@ export default class MongoInvoiceActiveDB
       status: InvoiceStatus.Active,
     };
 
-    const res = await this.lookupAgencyAndPaginateInvoice($match, params);
+    const res = await this.pipelineLatestLookupAgencyAndPaginateInvoice(
+      $match,
+      params
+    );
     return this.mapSimpleInvoice(res);
   }
 
-  async contributeTo(
+  async contributeToInvoice(
     invoiceId: string,
     params: InvoiceContributeToParams
   ): Promise<PublicInvoice> {
     const result = await InvoiceModel.findById(invoiceId);
-    if (!result) throw new Error("result not found");
+    if (!result) throw new Error("NOT_FOUND");
+
+    const lenderObjectId = new Types.ObjectId(params.lender);
+    const lender = await User.findById(lenderObjectId);
+    if (!lender) throw new Error("NOT_FOUND");
 
     result.contributions.set(params.lender, {
-      lender: new Types.ObjectId(params.lender),
+      lender: lenderObjectId,
       amount: params.amount,
       stake: params.stake,
+      repay: params.repay,
     });
     await result.save();
 
-    return this.mapPublicInvoice(result);
-  }
+    const set = new Set(lender.projectContributed);
+    set.add(result._id);
 
-  async contributionsFor(id: string): Promise<Map<string, number>> {
-    const result = await InvoiceModel.findById(id);
+    lender.projectContributed = Array.from(set);
+    lender.save();
+
+    return result.toPublicInvoice();
+  }
+  async getInvoiceAmountAndAmountUserContributed(
+    invoiceId: string,
+    lenderId: string
+  ): Promise<InvoiceNumbersWithUserContributionData> {
+    const result = await InvoiceModel.findById(invoiceId);
     if (!result) throw new Error("result not found");
 
-    const contributions = new Map<string, number>();
-    result.contributions.forEach((contribution, key) =>
-      contributions.set(key, contribution.amount)
-    );
-
-    return contributions;
+    return {
+      amount: result.amount,
+      repaymentAmount: result.repaymentAmount,
+      amountLenderContributed: result.contributions.get(lenderId)?.amount ?? 0,
+    };
   }
 
   async findInvoice(id: string): Promise<PublicInvoice> {
@@ -129,19 +136,29 @@ export default class MongoInvoiceActiveDB
     if (!result) throw new Error("result not found");
     const agencyResult = await Agency.findById(result.agency);
 
-    return this.mapPublicInvoice(result, agencyResult);
+    return result.toPublicInvoice(agencyResult?.toAgency());
   }
 
   private mapPublicInvoice(result: any, agencyResult?: any) {
+    const contributions: any[] = [];
+    result.contributions?.forEach((contribution: any) =>
+      contributions.push({
+        lender: { id: contribution.lender?.toString() },
+        amount: contribution.amount,
+        stake: contribution.stake,
+      })
+    );
+
     return {
       activatedAt: result.activatedAt,
       agency: agencyResult?.toAgency(),
       amount: result.amount,
       company: result.company,
-      contributions: [],
+      contributions: contributions,
       description: result.description,
       id: result._id.toString(),
       interest: result.interest,
+      walletAddress: result.walletAddress,
       name: result.name,
       status: result.status,
       url: result.url,
