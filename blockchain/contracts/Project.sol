@@ -22,13 +22,14 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
         bool repaid;
     }
 
-    uint256 private immutable amount;
+    uint256 private totalContributed = 0;
+    uint256 private immutable targetAmount;
     uint256 private immutable repayAmount;
     bool private repaid;
 
     constructor(string memory _projectId, uint256 _amount, uint256 _repay, address _token) {
         projectId = _projectId;
-        amount = _amount;
+        targetAmount = _amount;
         repayAmount = _repay;
         token = ERC20(_token);
     }
@@ -37,18 +38,17 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
         return projectId;
     }
 
-    function deposit(uint256 amountToRepay) public whenNotPaused nonReentrant   {
-        uint256 _amount = token.allowance(msg.sender, address(this));
+    function deposit(uint256 _amount) public whenNotPaused nonReentrant   {
+        uint256 allowance = token.allowance(msg.sender, address(this));
 
-        require(amount >= token.balanceOf(address(this)) + _amount, "deposit exceeds amount needed");
-        require(_amount <= amountToRepay, "Approve right amount");
+        require(totalContributed + allowance <= targetAmount, "deposit exceeds amount needed");
 
         bool success = token.transferFrom(msg.sender, address(this), _amount);
 
         if (success) {
+            totalContributed += _amount;
             contributions[msg.sender].lender = msg.sender;
             contributions[msg.sender].amount += _amount;
-            contributions[msg.sender].repay = amountToRepay;
         }
     }
 
@@ -66,11 +66,11 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     function claim() public whenNotPaused nonReentrant  {
         Contribution memory contribution = contributions[msg.sender];
 
-        require(!repaid, "contract has been paid");
-        require(!contribution.repaid, "contract has been paid");
+        require(!repaid && !contribution.repaid, "contract has not been repaid or user already claimed funds");
+        uint256 _repay = contribution.amount / totalContributed * repayAmount;
 
         contributions[msg.sender].repaid = true;
-        contributions[msg.sender].repaid = token.transfer(msg.sender, contribution.repay);
+        contributions[msg.sender].repaid = token.transfer(msg.sender, _repay);
     }
 
     function pause() external onlyOwner {
