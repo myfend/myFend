@@ -17,6 +17,7 @@ import InvoiceActiveController from "./controllers/invoiceActive";
 import MongoInvoiceActiveDB from "./adapters/mongoInvoiceActiveDB";
 import LenderContributionController from "./controllers/lenderContribution";
 import dotenv from "dotenv";
+import AdministratorInvoiceWithdrawalController from "./controllers/administratorInvoiceWithdrawal";
 
 dotenv.config();
 
@@ -33,8 +34,19 @@ export default class App {
     this.express.use(this.makeAdministratorAgencyController().registerRoutes());
     this.express.use(this.makeInvoiceActiveController().registerRoutes());
     this.express.use(this.makeLenderContributionController().registerRouter());
+    this.express.use(
+      this.makeAdministratorInvoiceWithdrawalController().registerRoutes()
+    );
 
     return this;
+  }
+
+  private makeAdministratorInvoiceWithdrawalController() {
+    return new AdministratorInvoiceWithdrawalController(
+      new EvmInvoiceDapp(),
+      new MongoInvoiceDb(),
+      this.emitter
+    );
   }
 
   private makeLenderContributionController() {

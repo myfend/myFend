@@ -5,7 +5,6 @@ import { Agency } from "./agency";
 import { EventEmitter } from "../events/event";
 import InvoiceStored from "../events/invoiceStored";
 import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
-import invoice from "../database/models/invoice";
 
 export default class AdministratorInvoiceController {
   private readonly auth = new JwtAuthMiddleware();
@@ -156,6 +155,7 @@ export interface AdministratorInvoice {
   activatedAt: Date;
   contributionClosesAt: Date;
   repaymentAt: Date;
+  balanceWithdrawnAt: Date;
   contributions: { lender: { id: string }; amount: number }[];
   contributed: number;
 }

@@ -12,6 +12,7 @@ import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
 import { NOT_FOUND } from "../constants/errors";
 import Invoice from "../database/models/invoice";
+import { InvoiceWithdrawDb } from "../controllers/administratorInvoiceWithdrawal";
 
 export class MongoInvoiceDB {
   protected mapSimpleInvoice(res: any[]) {
@@ -25,6 +26,7 @@ export class MongoInvoiceDB {
       url: invoice.url,
       agency: {
         id: invoice.agencies[0]?._id?.toString(),
+        number: invoice.agencies[0]?.number,
         name: invoice.agencies[0]?.name,
         description: invoice.agencies[0]?.description,
         email: invoice.agencies[0]?.email,
@@ -70,8 +72,18 @@ export class MongoInvoiceDB {
 
 export default class MongoInvoiceDb
   extends MongoInvoiceDB
-  implements InvoiceDB
+  implements InvoiceDB, InvoiceWithdrawDb
 {
+  async setInvoiceBalanceWithdrawn(
+    invoice: AdministratorInvoice
+  ): Promise<AdministratorInvoice> {
+    const result = await Invoice.findByIdAndUpdate(invoice.id, {
+      balanceWithdrawnAt: Date.now(),
+    });
+    if (!result) throw new Error("NOT_FOUND");
+
+    return result.toInvoice(invoice.agency);
+  }
   async takeInterestAndAmountFromAllInvoices(): Promise<
     InvoiceInterestAndAmount[]
   > {

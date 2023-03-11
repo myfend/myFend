@@ -68,6 +68,7 @@ export default class MongoInvoiceActiveDB
       agency: {
         id: invoice.agencies[0]?._id?.toString(),
         name: invoice.agencies[0]?.name,
+        number: invoice.agencies[0]?.number,
         description: invoice.agencies[0]?.description,
         email: invoice.agencies[0]?.email,
       },

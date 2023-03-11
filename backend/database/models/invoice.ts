@@ -28,6 +28,7 @@ export interface Invoice {
   contributionClosesAt: Date;
   repaymentAt: Date;
   activatedAt: Date;
+  balanceWithdrawnAt: Date;
   contributions: Map<string, Contribution>;
   toInvoice(agency?: Agency): LogicInvoice;
   toPublicInvoice(agency?: Agency): PublicInvoice;
@@ -43,6 +44,7 @@ const schema = new Schema<Invoice>(
     amount: Number,
     interest: Number,
     activatedAt: Date,
+    balanceWithdrawnAt: Date,
     contributionClosesAt: Date,
     repaymentAt: Date,
     company: String,
@@ -91,6 +93,7 @@ const schema = new Schema<Invoice>(
           id: this._id.toString(),
           name: this.name,
           walletAddress: this.walletAddress,
+          balanceWithdrawnAt: this.balanceWithdrawnAt,
           status: this.status,
           interest: this.interest,
           url: this.url,

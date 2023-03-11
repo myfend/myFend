@@ -3,6 +3,7 @@ import { Agency as AgencyData } from "../../controllers/agency";
 
 interface Agency {
   _id: Types.ObjectId;
+  number: string;
   name: string;
   description: string;
   email: string;
@@ -11,6 +12,7 @@ interface Agency {
 
 const schema = new Schema<Agency>(
   {
+    number: String,
     name: String,
     description: String,
     email: String,
@@ -23,6 +25,7 @@ const schema = new Schema<Agency>(
           description: this.description,
           email: this.email,
           name: this.name,
+          number: this.number,
           id: this._id.toString(),
         };
       },

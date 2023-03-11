@@ -6,8 +6,11 @@ import {
   JSON_RPC_PROVIDER_URL,
 } from "../constants/dapp";
 import { abi as deployerAbi } from "../resources/artifacts/Deployer.json";
+import { InvoiceWithdrawBlockchain } from "../controllers/administratorInvoiceWithdrawal";
 
-export default class EvmInvoiceDapp implements InvoiceDapp {
+export default class EvmInvoiceDapp
+  implements InvoiceDapp, InvoiceWithdrawBlockchain
+{
   async createWalletAddressFor(
     id: string,
     amount: number,
@@ -24,6 +27,11 @@ export default class EvmInvoiceDapp implements InvoiceDapp {
     await trx.wait();
 
     return await deployer.projectAddress(id);
+  }
+
+  async withdrawBalance(from: string, to: string) {
+    const trx = await this.deployerContract().withdrawBalance(from, to);
+    await trx.wait();
   }
 
   private deployerContract() {

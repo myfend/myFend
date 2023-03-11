@@ -26,6 +26,7 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
     uint256 private immutable targetAmount;
     uint256 private immutable repayAmount;
     bool private repaid;
+    bool private balanceWithdrawn;
 
     constructor(string memory _projectId, uint256 _amount, uint256 _repay, address _token) {
         projectId = _projectId;
@@ -50,6 +51,11 @@ contract Project is Pausable, Ownable, ReentrancyGuard {
             contributions[msg.sender].lender = msg.sender;
             contributions[msg.sender].amount += _amount;
         }
+    }
+
+    function ownerWithdrawBalance(address _to) public onlyOwner nonReentrant returns (bool) {
+        balanceWithdrawn = token.transfer(_to, totalContributed);
+        return balanceWithdrawn;
     }
 
     function repay() public whenNotPaused nonReentrant  {

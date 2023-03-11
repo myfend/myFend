@@ -15,13 +15,18 @@ contract Deployer is Pausable, Ownable, ReentrancyGuard {
         token = _token;
     }
 
-    function deployProject(string memory projectId, uint _amount, uint _repay) public returns (address) {
+    function deployProject(string memory projectId, uint _amount, uint _repay) public onlyOwner returns (address) {
         Project project = new Project(projectId, _amount, _repay, token);
         address contractAddress = address(project);
 
         projects[projectId] = contractAddress;
 
         return contractAddress;
+    }
+
+    function withdrawBalance(address _from, address _to) public onlyOwner returns (bool) {
+        Project _project = Project(payable(_from));
+        return _project.ownerWithdrawBalance(_to);
     }
 
     function projectAddress(string memory _projectId) public view returns (address) {

@@ -5,7 +5,12 @@ import { EventEmitter } from "../events/event";
 import Joi from "joi";
 import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
 
-export interface AgencyStoreInput {}
+export interface AgencyStoreInput {
+  number: string;
+  name: string;
+  email: string;
+  description: string;
+}
 
 export interface AdministratorAgencyDb {
   store(input: AgencyStoreInput): Promise<Agency>;
@@ -52,6 +57,7 @@ export class AdministratorAgencyController {
 
       try {
         await Joi.object({
+          number: Joi.number().required(),
           name: Joi.string().required(),
           description: Joi.string(),
           email: Joi.string().email().required(),

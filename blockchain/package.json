@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",
-    "node": "npx hardhat node"
+    "node": "npx hardhat node",
+    "analyze": "slither ."
   },
   "keywords": [],
   "author": "",

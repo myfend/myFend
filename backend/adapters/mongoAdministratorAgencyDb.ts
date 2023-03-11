@@ -19,6 +19,7 @@ export class MongoAdministratorAgencyDb implements AdministratorAgencyDb {
     return agencies.map((agency) => ({
       id: agency._id.toString(),
       email: agency.email,
+      number: agency.number,
       name: agency.name,
       description: agency.description,
     }));

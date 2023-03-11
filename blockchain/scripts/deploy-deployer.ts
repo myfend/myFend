@@ -9,7 +9,10 @@ async function main() {
 
   await deployer.deployed();
 
-  console.log("deployer address", deployer.address);
+  console.table({
+    "deployer address": deployer.address,
+    token: tokenAddress,
+  });
 }
 
 async function withProject() {
@@ -36,6 +39,6 @@ async function withProject() {
   });
 }
 
-withProject().catch((e) => {
+main().catch((e) => {
   console.log(e);
 });
