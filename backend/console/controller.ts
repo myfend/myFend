@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import Joi from "joi";
+import Encrypter from "../adapters/encrypter";
 
 export interface Controller {
   id: string;
@@ -27,10 +28,12 @@ export default class ControllerConsole {
   private program: Command;
 
   private db: ControllerDb;
+  private encrypter: Encrypter;
 
-  constructor(program: Command, db: ControllerDb) {
+  constructor(program: Command, db: ControllerDb, encrypter: Encrypter) {
     this.program = program;
     this.db = db;
+    this.encrypter = encrypter;
   }
 
   registerActions() {
@@ -62,6 +65,7 @@ export default class ControllerConsole {
         return;
       }
 
+      input.password = await this.encrypter.hash(input.password);
       const controller = await this.db.store(input);
       console.info("welcome", controller.firstname, "!");
     };

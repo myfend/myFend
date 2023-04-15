@@ -18,12 +18,14 @@ import MongoInvoiceActiveDB from "./adapters/mongoInvoiceActiveDB";
 import LenderContributionController from "./controllers/lenderContribution";
 import dotenv from "dotenv";
 import AdministratorInvoiceWithdrawalController from "./controllers/administratorInvoiceWithdrawal";
+import TronInvoiceDapp from "./adapters/TronInvoiceDapp";
 
 dotenv.config();
 
 export default class App {
   private express = express();
   private emitter = new Event();
+  private invoiceDapp = new TronInvoiceDapp();
 
   private registerControllers(): App {
     this.express.use(this.makeLenderController().registerRoutes());
@@ -43,7 +45,7 @@ export default class App {
 
   private makeAdministratorInvoiceWithdrawalController() {
     return new AdministratorInvoiceWithdrawalController(
-      new EvmInvoiceDapp(),
+      this.invoiceDapp,
       new MongoInvoiceDb(),
       this.emitter
     );
@@ -77,7 +79,7 @@ export default class App {
   private makeAdministratorInvoiceController() {
     return new AdministratorInvoiceController(
       new MongoInvoiceDb(),
-      new EvmInvoiceDapp(),
+      this.invoiceDapp,
       this.emitter
     );
   }
