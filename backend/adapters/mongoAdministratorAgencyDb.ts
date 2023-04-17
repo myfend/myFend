@@ -8,10 +8,11 @@ import agency from "../database/models/agency";
 
 export class MongoAdministratorAgencyDb implements AdministratorAgencyDb {
   async search(query: string): Promise<Agency[]> {
+    const regExp = new RegExp(`${query}*`, "i");
     const agencies = await AgencyModel.aggregate([
       {
         $match: {
-          $or: [{ email: { $regex: query } }, { name: { $regex: query } }],
+          $or: [{ email: { $regex: regExp } }, { name: { $regex: regExp } }],
         },
       },
       { $limit: 8 },
