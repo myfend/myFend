@@ -30,6 +30,7 @@ export class MongoInvoiceDB {
         name: invoice.agencies[0]?.name,
         description: invoice.agencies[0]?.description,
         email: invoice.agencies[0]?.email,
+        website: invoice.agencies[0]?.website,
       },
       company: invoice.company,
       status: invoice.status,
