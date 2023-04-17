@@ -7,6 +7,7 @@ import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
 
 export interface AgencyStoreInput {
   number: string;
+  website: string;
   name: string;
   email: string;
   description: string;
@@ -61,6 +62,7 @@ export class AdministratorAgencyController {
           name: Joi.string().required(),
           description: Joi.string(),
           email: Joi.string().email().required(),
+          website: Joi.string().required(),
         })
           .options({ abortEarly: false })
           .validateAsync(input);
@@ -70,6 +72,9 @@ export class AdministratorAgencyController {
       }
 
       try {
+        input.website = input.website.startsWith("http")
+          ? input.website
+          : `http://${input.website}`;
         const agency = await this.db.store(input);
         this.emitter.emit<AgencyStored>(new AgencyStored(agency));
 

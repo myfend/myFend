@@ -1,6 +1,7 @@
 export interface Agency {
   id: string;
   name: string;
+  website: string;
   number: string;
   description: string;
   email: string;

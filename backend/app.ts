@@ -10,7 +10,6 @@ import Encrypter from "./adapters/encrypter";
 import JwtAuthenticator from "./adapters/jwtAuthenticator";
 import AdministratorInvoiceController from "./controllers/administratorInvoice";
 import MongoInvoiceDb from "./adapters/mongoInvoiceDb";
-import EvmInvoiceDapp from "./adapters/EvmInvoiceDapp";
 import { AdministratorAgencyController } from "./controllers/administratorAgency";
 import { MongoAdministratorAgencyDb } from "./adapters/mongoAdministratorAgencyDb";
 import InvoiceActiveController from "./controllers/invoiceActive";
