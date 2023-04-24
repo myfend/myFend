@@ -5,6 +5,18 @@ import { Agency } from "./agency";
 import { EventEmitter } from "../events/event";
 import InvoiceStored from "../events/invoiceStored";
 import { JwtAuthMiddleware } from "../adapters/jwtAuthenticator";
+import multer from "multer";
+import invoice from "../database/models/invoice";
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "resources/uploads/",
+    filename: (req, file, cb) => {
+      const strings = file.originalname.split(".");
+      cb(null, file.fieldname + Date.now() + "." + strings[strings.length - 1]);
+    },
+  }),
+});
 
 export default class AdministratorInvoiceController {
   private readonly auth = new JwtAuthMiddleware();
@@ -21,7 +33,12 @@ export default class AdministratorInvoiceController {
   }
 
   registerRoutes(): Router {
-    this.router.post("/invoice/store", this.auth.middleware(), this.store());
+    this.router.post(
+      "/invoice/store",
+      this.auth.middleware(),
+      upload.single("invoice"),
+      this.store()
+    );
     this.router.get("/invoice/all", this.auth.middleware(), this.list());
     this.router.get("/invoice/stats", this.auth.middleware(), this.stats());
     this.router.get("/invoice/:invoice", this.auth.middleware(), this.show());
@@ -50,6 +67,13 @@ export default class AdministratorInvoiceController {
       } catch (e) {
         return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json(e);
       }
+
+      input.invoiceUrl =
+        req.protocol +
+        "://" +
+        req.get("host") +
+        "/upload/" +
+        req.file?.filename;
 
       try {
         let invoice = await this.db.store(input);
@@ -128,6 +152,7 @@ export interface InvoiceCreateInput {
   name: string;
   description: string;
   url: string;
+  invoiceUrl: string;
   agency: string;
   amount: number;
   interest: number;
@@ -150,6 +175,7 @@ export interface AdministratorInvoice {
   amount: number;
   repaymentAmount?: number;
   interest: number;
+  invoiceUrl: string;
   company: string;
   status: InvoiceStatus;
   activatedAt: Date;
@@ -165,6 +191,7 @@ export interface SimpleInvoice {
   name: string;
   description: string;
   url: string;
+  invoiceUrl: string;
   agency: Agency;
   amount: number;
   interest: number;

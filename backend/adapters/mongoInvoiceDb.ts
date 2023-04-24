@@ -8,10 +8,9 @@ import {
   SimpleInvoice,
 } from "../controllers/administratorInvoice";
 import Agency from "../database/models/agency";
-import agency from "../database/models/agency";
 import InvoiceModel from "../database/models/invoice";
-import { NOT_FOUND } from "../constants/errors";
 import Invoice from "../database/models/invoice";
+import { NOT_FOUND } from "../constants/errors";
 import { InvoiceWithdrawDb } from "../controllers/administratorInvoiceWithdrawal";
 
 export class MongoInvoiceDB {
@@ -24,6 +23,7 @@ export class MongoInvoiceDB {
       interest: invoice.interest,
       amount: invoice.amount,
       url: invoice.url,
+      invoiceUrl: invoice.invoiceUrl,
       agency: {
         id: invoice.agencies[0]?._id?.toString(),
         number: invoice.agencies[0]?.number,

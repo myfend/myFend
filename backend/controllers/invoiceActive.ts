@@ -65,6 +65,7 @@ export interface PublicInvoice {
   name: string;
   description: string;
   url: string;
+  invoiceUrl: string;
   agency?: Agency;
   amount: number;
   walletAddress: string;

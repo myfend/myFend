@@ -18,6 +18,7 @@ import LenderContributionController from "./controllers/lenderContribution";
 import dotenv from "dotenv";
 import AdministratorInvoiceWithdrawalController from "./controllers/administratorInvoiceWithdrawal";
 import TronInvoiceDapp from "./adapters/TronInvoiceDapp";
+import path from "path";
 
 dotenv.config();
 
@@ -95,6 +96,10 @@ export default class App {
     this.express.use(cors());
     this.express.use(express.json());
     this.express.use(express.urlencoded({ extended: true }));
+    this.express.use(
+      "/upload",
+      express.static(path.join(__dirname, "../resources/uploads"))
+    );
 
     try {
       await startMongoose();
