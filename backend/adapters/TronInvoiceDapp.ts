@@ -8,6 +8,12 @@ import {
 import { abi as DEPLOYER_ABI } from "../resources/artifacts/TronDeployer.json";
 import { InvoiceWithdrawBlockchain } from "../controllers/administratorInvoiceWithdrawal";
 import TronWeb from "tronweb";
+console.table({
+  CONTROLLER_PRIVATE_KEY,
+  DEPLOYER_CONTRACT_ADDRESS,
+  TRON_FULL_HOST_URL,
+  TRON_PRO_API_KEY,
+});
 
 export default class TronInvoiceDapp
   implements InvoiceDapp, InvoiceWithdrawBlockchain
@@ -27,6 +33,10 @@ export default class TronInvoiceDapp
     repaymentAmount: number
   ): Promise<string> {
     const deployer = await this.deployerContract();
+    console.log(
+      id,
+      this.tronWeb.toSun(amount),
+      this.tronWeb.toSun(repaymentAmount));
     await deployer
       .deployProject(
         id,
