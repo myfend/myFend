@@ -18,23 +18,26 @@ Then, run the migration with:
 
       */
       userFeePercentage: 100,
-      feeLimit: 1000 * 1e6,
+      feeLimit: 8000 * 1e6,
       fullHost: 'https://api.trongrid.io',
-      network_id: '1'
+      network_id: '1',
+      tokenAddress: 'TPYmHEhy5n8TCEfYGqW2rPxsghSfzghPDn'
     },
     shasta: {
       privateKey: process.env.PRIVATE_KEY_SHASTA,
-      userFeePercentage: 50,
-      feeLimit: 1000 * 1e6,
+      userFeePercentage: 100,
+      feeLimit: 4000 * 1e6,
       fullHost: 'https://api.shasta.trongrid.io',
-      network_id: '2'
+      network_id: '2',
+      tokenAddress: 'TMUWzqKnXXFqYW3Yy8m2ebYDQLDkSXemM2'
     },
     nile: {
       privateKey: process.env.PRIVATE_KEY_NILE,
       userFeePercentage: 100,
       feeLimit: 1000 * 1e6,
       fullHost: 'https://nile.trongrid.io',
-      network_id: '3'
+      network_id: '3',
+      tokenAddress: 'TMUWzqKnXXFqYW3Yy8m2ebYDQLDkSXemM2'
     },
     development: {
       // For tronbox/tre docker image
